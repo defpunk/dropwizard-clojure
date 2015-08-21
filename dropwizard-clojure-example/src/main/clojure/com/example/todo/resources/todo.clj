@@ -8,7 +8,7 @@
 (definterface ITodo
   (get [])
   (delete [])
-  (add [^Long id ^com.example.todo.representations.Todo todo])
+  (add [^Long id ^com.example.todo.representations.Todo item])
   (get [^Long id])
   (toggle [^Long id])
   (delete [^Long id]))
@@ -21,12 +21,13 @@
     (^{GET true Timed true} get [this] @state)
 
     (^{DELETE true Timed true} delete [this]
-     (reset! state (atom {}))
+     (reset! state {})
      {})
-    
+
     (^{Path "{id}" POST true Timed true}
-     add [this ^{PathParam "id"} id ^{Valid true} todo]
-     (swap! state assoc id todo))
+     add [this ^{PathParam "id"} id ^{Valid true} item]
+     (println item)
+     (swap! state assoc id item))
     
     (^{Path "{id}" GET true Timed true}
      get [this ^{PathParam "id"} id]

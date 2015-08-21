@@ -8,7 +8,6 @@
   (:import  [io.dropwizard.setup Environment]
             [com.codahale.metrics.health HealthCheck]
             [com.codahale.metrics.health HealthCheckRegistry]
-            [javax.ws.rs GET POST DELETE Path Consumes Produces PathParam]
     )
   (:gen-class))
 
