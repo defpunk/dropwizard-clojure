@@ -17,9 +17,12 @@
                                     default-unhealthy-message
                                     arg))))
 
-(def ^{:private true} result
+(def ^{:private true} result 
   (comp to-result marshall-clj-result))
 
-(defn healthcheck [healthcheck-fn]
+(defn healthcheck [f] "creates a healthcheck based on the supplied function"
   (proxy [HealthCheck] []
-    (check [] (result (healthcheck-fn)))))
+    (check [] (result (f)))))
+
+(defn update-healthcheck [h f] "updates the unction used when execising the supplied healthcheck"
+  (update-proxy h {"check" (fn [this] (result (f)))}))
