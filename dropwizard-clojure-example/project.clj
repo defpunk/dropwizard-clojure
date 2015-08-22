@@ -11,7 +11,7 @@
                  [cheshire "5.5.0"]]
   :source-paths ["src/main/clojure"]
   :java-source-paths ["src/main/java"]
-  :main com.example.todo.core
+  :main example.app
   :profiles {:uberjar {:aot :all}}
   :plugins [[org.clojars.punkisdead/lein-cucumber "1.0.4"]]
   :global-vars {*warn-on-reflection* true}

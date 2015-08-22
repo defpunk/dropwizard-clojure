@@ -1,25 +1,34 @@
-(ns com.example.todo.core
+(ns example.app
   (:require [dropwizard-clojure.core
              :refer [defapplication defmain register-resource
                      register-healthcheck add-healthcheck remove-healthcheck]]
             [dropwizard-clojure.healthcheck :refer [healthcheck update-healthcheck]]
-            [com.example.todo.resources.todo :refer [todo-resource]]
-            [com.example.todo.health.todo-size :refer [todo-size]])
-  (:import  [io.dropwizard.setup Environment]
-            [com.codahale.metrics.health HealthCheck]
-            [com.codahale.metrics.health HealthCheckRegistry]
+            [example.todo :refer [todo-resource todo-deserialiser]])
+  (:import  [io.dropwizard.setup Environment] 
+            [example.todo Todo]
+            [com.fasterxml.jackson.databind.module SimpleModule]
     )
   (:gen-class))
+
+
+(defn ds-mod []
+  "created a simple module"
+  (doto (SimpleModule. )
+    (.addDeserializer (type (Todo. true "test")) (todo-deserialiser))
+    )
+  )
 
 (def mock-hc (healthcheck (fn [] [true "I'm a mocked healthcheck"])))
 
 (defapplication todo-app 
   (fn [settings ^Environment env]
-    (let [resource (todo-resource)]
+    (let [resource (todo-resource) mod (ds-mod)]
       (-> env
           (register-resource resource)
           (register-healthcheck :mocked mock-hc)
-          ))))
+          )
+      (.registerModule (.getObjectMapper env) mod)
+      )))
 
 (defmain todo-app)
 
