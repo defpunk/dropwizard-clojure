@@ -55,6 +55,10 @@
 (defn register-healthcheck [^Environment env hc-name hc]
   (add-healthcheck-to-registry (.healthChecks env) hc-name hc) env)
 
+(defn register-jackson-module [^Environment env mod]
+  (.registerModule (.getObjectMapper env) mod)
+  env)
+
 ;;only works on a running application
 (defn add-healthcheck [app hc-name hc-fn]
   (let [^HealthCheckRegistry hc (.healthChecks (env-from-app app))]

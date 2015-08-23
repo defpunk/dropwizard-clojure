@@ -4,6 +4,7 @@
            [javax.validation Valid]
            [javax.ws.rs GET POST DELETE Path Consumes Produces PathParam]
            [com.fasterxml.jackson.databind JsonDeserializer]
+           [com.fasterxml.jackson.databind.module SimpleModule]
            ))
 
 (defrecord Todo [^Boolean complete ^String description])
@@ -17,7 +18,7 @@
   (delete [^Long id]))
 
 
-(defn todo-deserialiser []
+(defn- todo-deserialiser []
   (proxy [JsonDeserializer] []
     (^example.todo.Todo deserialize [^com.fasterxml.jackson.core.JsonParser jp 
                                       ^com.fasterxml.jackson.databind.DeserializationContext ctxt]
@@ -63,3 +64,10 @@
   (if (<= (count (.get resource)) max-size)
     [true (str max-size)]
     [false "too many todos"]))
+
+(defn todo-module []
+  "create a simple module"
+  (doto (SimpleModule. )
+    (.addDeserializer (type (Todo. true "test")) (todo-deserialiser))
+    )
+  )
