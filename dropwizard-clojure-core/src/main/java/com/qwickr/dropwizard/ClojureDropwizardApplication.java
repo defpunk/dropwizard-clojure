@@ -20,8 +20,11 @@ public abstract class ClojureDropwizardApplication extends Application<ClojureDr
 
     private Container jettyContainer;
 
+    private Map settings;
+
 	@Override
     public void run(ClojureDropwizardConfiguration configuration, Environment environment) {
+        this.settings = configuration.getSettings();
         runWithSettings(configuration.getSettings() , environment);
         environment.lifecycle().addServerLifecycleListener(new ServerLifecycleListener() {
     		@Override

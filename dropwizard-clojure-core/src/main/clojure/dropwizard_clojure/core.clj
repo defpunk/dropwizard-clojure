@@ -6,19 +6,15 @@
            [io.dropwizard.jersey.setup JerseyEnvironment]
            [com.codahale.metrics.health HealthCheckRegistry]))
 
-(defn- application
-  ([app-name run-fn]
-   (application app-name '(constantly nil) run-fn))
-  ([app-name init-fn run-fn]
-   `(def ~app-name
-      (proxy [ClojureDropwizardApplication] []
-        (initialize [bootstrap#] (~init-fn bootstrap#))
-        (runWithSettings [settings# environment#]
-          (~run-fn settings# environment#))))))
+(defprotocol ApplicationSetup
+  (initialize [this bootstrap])
+  (configure [this settings ^Environment env]))
 
-(defmacro defapplication
-  [& args]
-  (apply application args))
+(defn application [setup] "creates an application which will be initialized using the setup implementation provided"
+  (proxy [ClojureDropwizardApplication] []
+        (initialize [bootstrap#] (initialize setup bootstrap#))
+        (runWithSettings [settings# environment#]
+          (configure setup settings# environment#))))
 
 (defmacro defmain [app]
   `(def ~'-main
