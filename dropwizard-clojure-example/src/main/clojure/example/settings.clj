@@ -6,7 +6,7 @@
 
 
 (defprotocol FindMaxValue 
-  (getById [this id]))
+  (getById [this ^Long id]))
 
 (deftype ^{Path "/settings"
            Consumes ["application/json"]

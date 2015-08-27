@@ -1,12 +1,17 @@
 # dropwizard-clojure
 
-[dropwizard.io](http://dropwizard.io/)
+The aim of this project is to provide the infrastructure for creating clojure applications on top of the dropwizard framework.  To find out more about the framework check out [dropwizard.io](http://dropwizard.io/).
+
+The dropwizard-clojure project has two subprojects.
+
+1. dropwizard-clojure-core - A wrapper over the standard dropwizard designed to make the implementation of clojure dropwizard apps easier.
+2. dropwizard-clojure-example - A dropwiazrd project implemented in clojure to showcase the features of the dropwizard-clojure-core  module. 
 
 ## Table of Contents
 
 1. [Leiningen](#leiningen)
-2. [Creating a Configuration class](#creating-a-configuration-class)
-3. [Creating an Application class](#creating-an-application-class)
+2. [Configuration](#configuration)
+3. [Creating an Application](#creating-an-application)
 4. [Creating a Representation class](#creating-a-representation-class)
 5. [Creating a Resource class](#creating-a-resource-class)
 6. [Creating a HealthCheck](#creating-a-healthcheck)
@@ -15,11 +20,31 @@
 
 ## Leiningen
 
+NB. This fork of dropwizard-clojure has not been uploaded to clojars so you will need to clone the repo and install it locally.
+
 ```clojure
-[dropwizard-clojure/dropwizard-clojure "0.1.1"]
+[dropwizard-clojure/dropwizard-clojure "0.1.2-SNAPSHOT"]
 ```
 
-## Creating a Configuration class
+## Configuration
+
+Typically each Java dropwizard application will have its own unique extention of the io.dropwizard.Configuration class.  An example of such a class is shown below [TodoConfiguration.java](#TodoConfiguration.java).  Dropwizard will serialize a yml file into your configuration class before starting the application.  The yaml file contains a mixture of the application specific settings and general dropwizard settings that are used to configure logging, ports, connections etc.
+
+However to mimimize the java required in dropwizard-clojure applications the libary will read values from a settings node from the yaml file provided see [dev-todo.yml](#dev-todo.yml) below.  Rather than creating a custom application and overriding the initialize and configure methods dropwizard-clojure applications will be configured by injecting an implementation of the ApplicationSetup protocol.  
+
+ApplicationSetup Protocol
+```clojure
+(defprotocol ApplicationSetup
+  (initialize [this bootstrap])
+  (configure [this settings ^Environment env]))
+```
+
+[dev-todo.yml](dropwizard-clojure-example/resources/dev-todo.yml)
+
+```yml
+settings:
+  maxSize: 4
+```
 
 [TodoConfiguration.java](dropwizard-clojure-example/src/main/java/com/example/todo/TodoConfiguration.java)
 
@@ -46,94 +71,79 @@ public class TodoConfiguration extends Configuration {
 }
 ```
 
-Dropwizard will serialize a yml file into your configuration class before starting the application.
 
-[dev-todo.yml](dropwizard-clojure-example/resources/dev-todo.yml)
+## Creating an Application
 
-```yml
-maxSize: 4
+To create an application call the application function with an implementation of the protocol.
+
+```clojure
+(def todo-app (application (MyAppSetup.)))
 ```
-
-## Creating an Application class
-
-Your dropwizard application requires a concrete implementation of `io.dropwizard.Application` that is parameterized with your configuration class from above. Unfortunately, clojure does not yet support specifying parameterized types. Thus, a tiny abstract application class is recommended to specify the parameterized configuration class.
-
-[AbstractTodoApplication.java](dropwizard-clojure-example/src/main/java/com/example/todo/AbstractTodoApplication.java)
-
-```java
-package com.example.todo;
-
-import io.dropwizard.Application;
-
-public abstract class AbstractTodoApplication
-    extends Application<TodoConfiguration> {
-}
-```
-
-Now we're ready to write some clojure.
-
-The `defapplication` macro is provided to conveniently create proxy instances of your abstract application class. Two function signatures are available. One that allows you override the `initialize` and `run` methods. The other allows you to override the `run` method only. Below the latter is shown.
 
 The `defmain` macro is provided to conveniently generate a `main` method that will start your application correctly.
+
+The example below shows an example application.  Most of the interesting work is contained in the creation of the TodoSetup type which implements the ApplicationSetup protocol.  The configure method registers the resource and jackson modules created via functions imported from the example.todo namespace and the healthcheck created using the mock-hc function.    
 
 [core.clj](dropwizard-clojure-example/src/main/clojure/com/example/todo/core.clj)
 
 ```clojure
-(ns com.example.todo.core
-  (:require [dropwizard-clojure.core :refer [defapplication defmain]]
-  (:import [com.example.todo AbstractTodoApplication TodoConfiguration]
-           [io.dropwizard.setup Environment])
+(ns example.app
+  (:require [dropwizard-clojure.core
+             :refer [application defmain register-resource register-jackson-module
+                     register-healthcheck add-healthcheck remove-healthcheck ApplicationSetup]]
+            [dropwizard-clojure.healthcheck :refer [healthcheck update-healthcheck]]
+            [example.todo :refer [todo-resource todo-module]]
+            [example.settings :refer [build-settings-resource]])
+  (:import  [io.dropwizard.setup Environment])
   (:gen-class))
 
-(defapplication todo-app
-  AbstractTodoApplication
-  (fn [^TodoConfiguration config ^Environment env]
-    ;; nothing to do yet
-    ))
+(def mock-hc (healthcheck (fn [] [true "I'm a mocked healthcheck"])))
+
+(deftype TodoSetup []
+  ApplicationSetup
+  (initialize [this bootstrap] (println "initialize running"))
+  (configure [this settings env]
+    (let [resource (todo-resource) mod (todo-module)]
+      (-> env
+          (register-resource resource)
+          (register-healthcheck :mocked mock-hc)
+          (register-jackson-module mod)
+          )
+      )))
+  
+
+(def todo-app (application (TodoSetup.)))
 
 (defmain todo-app)
 
 ```
 
-## Creating a Representation class
+## Creating a Representation
 
-[Todo.java](dropwizard-clojure-example/src/main/java/com/example/todo/representations/Todo.java)
+Clojure records can be used in place of Java classes as the representations.
 
-```java
-package com.example.todo.representations;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-
-public class Todo {
-    @NotNull
-    private Boolean complete;
-    @NotEmpty
-    private String description;
-
-    public Todo() {
-        // Jackson deserialization
-    }
-
-    public Todo(Boolean complete, String description) {
-        this.complete = complete;
-        this.description = description;
-    }
-
-    @JsonProperty
-    public Boolean getComplete() {
-        return complete;
-    }
-
-    @JsonProperty
-    public String getDescription() {
-        return description;
-    }
-}
+```clojure
+(defrecord Todo [^Boolean complete ^String description])
 ```
 
-## Creating a Resource class
+There is a small problem with this approach, Clojure records are immutable however the Jackson libary that is 
+used to deserialize the input typically mutates objects that can be created from a base class.  To get round this problem a JsonDeserializer can be created as shown below.  This approach works in the example application but could run into problems with larger object graphs.  Future iterations will explore alternatives. 
+
+```clojure
+(defn- todo-deserialiser []
+  (proxy [JsonDeserializer] []
+    (^example.todo.Todo deserialize [^com.fasterxml.jackson.core.JsonParser jp 
+                                      ^com.fasterxml.jackson.databind.DeserializationContext ctxt]
+      (let [n (.readTree (.getCodec jp) jp)]
+        (Todo. (.get n "complete") (.get n "description"))
+      )                                
+    ) 
+  )) 
+```
+
+## Creating a Resource
+
+The path of least resistance is to define an interface and create a type that implements it.  The interface is used to bridge the gap between the Clojure and Java worlds.  Without an interface the jersey underpinnings will see input types and output types as java Objects, this means that extra work will be needed in the marshalling of types.  The convenience of avoiding the marshalling issues worth the limitations of preferring interfaces over protocols here.
 
 [core.clj](dropwizard-clojure-example/src/main/clojure/com/example/todo/resources/todo.clj)
 
@@ -187,70 +197,34 @@ public class Todo {
 
 ### Registering a Resource
 
-[core.clj](dropwizard-clojure-example/src/main/clojure/com/example/todo/core.clj)
+As demonstrated in the configuration section above registering a resource is as simple as calling the register-resource function.  The `register-resource` function accepts a resource and returns the environment to allow threading. 
 
 ```clojure
-(ns com.example.todo.core
-  (:require [dropwizard-clojure.core :refer [defapplication defmain register-resource]]
-            [com.example.todo.resources.todo :refer [todo-resource]]
-  (:import [com.example.todo AbstractTodoApplication TodoConfiguration]
-           [io.dropwizard.setup Environment])
-  (:gen-class))
-
-(defapplication todo-app
-  AbstractTodoApplication
-  (fn [^TodoConfiguration config ^Environment env]
-    (register-resource (todo-resource))))
-
-(defmain todo-app)
+ (-> env
+          (register-resource resource)
 ```
 
-The `register-resources` accepts of a list of resources and returns the environment to allow threading.
 
 ## Creating a HealthCheck
 
-Functions may be registered to check the health of your application. The value returned from the function may optionally include a message or Throwable. If the value returned is a sequence, vector, or list, the first element is checked for truthiness to represent the health and the second element is the message or Throwable. Otherwise, the value returned is simply checked for truthiness to represent the health.
+Healthchecks can be created using the healthcheck function as shown below.  The healthcheck function takes another function as its parameter.  This function can be used to check the health of your application.  The value returned from the function may optionally include a message or Throwable. If the value returned is a sequence, vector, or list, the first element is checked for truthiness to represent the health and the second element is the message or Throwable. Otherwise, the value returned is simply checked for truthiness to represent the health.
 
 [todo_size.clj](dropwizard-clojure-example/src/main/clojure/com/example/todo/health/todo_size.clj)
 
 ```clojure
-(ns com.example.todo.health.todo-size
-  (:import [com.example.todo.resources.todo TodoResource]))
-
-(defn todo-size [max-size ^TodoResource resource]
-  (if (<= (count (.get resource)) max-size)
-    true
-    [false "too many todos"]))
+(def mock-hc (healthcheck (fn [] [true "I'm a mocked healthcheck"])))
 ```
 
 ### Registering a HealthCheck
 
-[core.clj](dropwizard-clojure-example/src/main/clojure/com/example/todo/core.clj)
+As demonstrated in the configuration section healthchecks can be added by calling the register-healthcheck function.  This function expects a name for the healthcheck - supplied here as a keyword and the healthcheck itself.  As well as the function shown below that uses the environment to register the  healthcheck and returns the environment to allow threading.  Versions of the function exist to register and unregister healthchecks that take the application instance to enable repl based work flows.
 
 ```clojure
-(ns com.example.todo.core
-  (:require [dropwizard-clojure.core
-             :refer [defapplication defmain register-resource
-                     register-healthcheck]]
-            [com.example.todo.resources.todo :refer [todo-resource]]
-            [com.example.todo.health.todo-size :refer [todo-size]])
-  (:import [com.example.todo AbstractTodoApplication TodoConfiguration]
-           [io.dropwizard.setup Environment])
-  (:gen-class))
-
-(defapplication todo-app
-  AbstractTodoApplication
-  (fn [^TodoConfiguration config ^Environment env]
-    (let [resource (todo-resource)
-          healthcheck #(todo-size (.getMaxSize config) resource)]
-      (-> env
-          (register-resource resource)
-          (register-healthcheck :todo-size healthcheck)))))
-
-(defmain todo-app)
+(-> env
+          (register-healthcheck :mocked mock-hc)
 ```
 
-The `register-healthchecks` accepts of map of healthcheck name to healthcheck function and returns the environment to allow threading.
+
 
 ## Building fat JARs
 
