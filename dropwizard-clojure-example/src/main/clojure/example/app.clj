@@ -4,6 +4,7 @@
                      register-healthcheck add-healthcheck remove-healthcheck ApplicationSetup]]
             [dropwizard-clojure.healthcheck :refer [healthcheck update-healthcheck]]
             [example.todo :refer [todo-resource todo-module]]
+            [example.share :refer [build-shares-resource]]
             [example.settings :refer [build-settings-resource]])
   (:import  [io.dropwizard.setup Environment])
   (:gen-class))
@@ -17,6 +18,7 @@
     (let [resource (todo-resource) mod (todo-module) s-resource (build-settings-resource settings)]
       (-> env
           (register-resource resource)
+          (register-resource (build-shares-resource settings))
           (register-healthcheck :mocked mock-hc)
           (register-jackson-module mod)
           )

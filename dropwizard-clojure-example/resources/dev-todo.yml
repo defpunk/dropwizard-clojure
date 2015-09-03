@@ -1,2 +1,3 @@
 settings:
   max-size: 4
+  shares: [ ['GSK.L', '100'], ['BATS.L', '100'] , ['RB.L', '100'], ['BT.L', '100']]
