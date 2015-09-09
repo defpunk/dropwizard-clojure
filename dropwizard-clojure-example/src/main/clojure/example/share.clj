@@ -1,5 +1,6 @@
 (ns example.share
   (:require [clojure.tools.logging :as log]
+            [dropwizard-clojure.task :as task]
   			[clj-http.client :as client]
   			[cheshire.core :as cc])
   (:refer-clojure)
@@ -22,10 +23,11 @@
 		  content (clean-result (subs (:body (client/get url)) 3))
 		  json (first (cc/parse-string content true))
 		]
-		(select-keys json [:name :dy :l :lo52 :hi52]) 
+		(assoc (select-keys json [:name :dy :l :lo52 :hi52]) :quantity (second x))
 	))
 
 (defn post-data [x]
+  (println (str "posting " x))
   (client/post "http://localhost:8080/shares"
   {:body (cc/generate-string x)
    :content-type :json
@@ -48,3 +50,7 @@
 
 (defn build-shares-resource [m]
   (ShareResource. ))
+
+(defn populate-shares-task [s]
+  "creates a task that gets share tickers from portfolio defined in settings map"
+  (task/task "populateShares" (fn [_] (reset-tickers (get s "portfolio")))))

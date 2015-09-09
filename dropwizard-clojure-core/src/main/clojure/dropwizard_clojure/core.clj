@@ -1,5 +1,7 @@
 (ns dropwizard-clojure.core
-  (:require [dropwizard-clojure.healthcheck :refer [healthcheck]])
+  (:require [dropwizard-clojure.healthcheck :refer [healthcheck]]
+            [clojure.walk])
+
   (:import [com.qwickr.dropwizard ClojureDropwizardApplication]
            [io.dropwizard Application]
            [io.dropwizard.setup Environment]
@@ -53,6 +55,10 @@
 
 (defn register-jackson-module [^Environment env mod]
   (.registerModule (.getObjectMapper env) mod)
+  env)
+
+(defn add-task [^Environment env t]
+  (.addTask (.admin env) t)
   env)
 
 ;;only works on a running application

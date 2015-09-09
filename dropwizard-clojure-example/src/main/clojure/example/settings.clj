@@ -16,4 +16,4 @@
     (^{GET true Timed true} getById [this id] {"max-size" maxSize}))
 
 (defn build-settings-resource [m]
-  (MaxSizeResource. (get m "max-size" m)))
+  (MaxSizeResource. (get m "max-size")))

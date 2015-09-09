@@ -1,10 +1,10 @@
 (ns example.app
   (:require [dropwizard-clojure.core
              :refer [application defmain register-resource register-jackson-module
-                     register-healthcheck add-healthcheck remove-healthcheck ApplicationSetup]]
+                     register-healthcheck add-healthcheck remove-healthcheck ApplicationSetup add-task]]
             [dropwizard-clojure.healthcheck :refer [healthcheck update-healthcheck]]
             [example.todo :refer [todo-resource todo-module]]
-            [example.share :refer [build-shares-resource]]
+            [example.share :refer [build-shares-resource populate-shares-task]]
             [example.settings :refer [build-settings-resource]])
   (:import  [io.dropwizard.setup Environment])
   (:gen-class))
@@ -18,11 +18,14 @@
     (let [resource (todo-resource) mod (todo-module) s-resource (build-settings-resource settings)]
       (-> env
           (register-resource resource)
+          (register-resource s-resource)
           (register-resource (build-shares-resource settings))
           (register-healthcheck :mocked mock-hc)
           (register-jackson-module mod)
+          (add-task (populate-shares-task settings)))
+          
           )
-      )))
+      ))
   
 
 (def todo-app (application (TodoSetup.)))
