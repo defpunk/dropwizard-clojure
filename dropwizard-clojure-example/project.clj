@@ -9,8 +9,7 @@
                  [org.clojars.punkisdead/lein-cucumber "1.0.4"]
                  [clj-http "2.0.0"]
                  [cheshire "5.5.0"]]
-  :source-paths ["src/main/clojure"]
-  :java-source-paths ["src/main/java"]
+  :source-paths ["src/clojure"]
   :main example.app
   :profiles {:uberjar {:aot :all}}
   :plugins [[org.clojars.punkisdead/lein-cucumber "1.0.4"]]
