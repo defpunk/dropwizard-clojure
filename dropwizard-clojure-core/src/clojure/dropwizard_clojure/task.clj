@@ -13,9 +13,7 @@
   (if imm (transform imm) {}))
 
 (defn- values-to-writer [^PrintWriter pw x]
-	(cond
-		(or (seq? x) (vector? x) (list? x)) (doseq [y x] (.println pw y))
-		:else (if x (.println pw x))))
+	(if x (.println pw x)))
 
 (defn task [^String n f] "creates a task based on the supplied function"
   (proxy [Task] [n]

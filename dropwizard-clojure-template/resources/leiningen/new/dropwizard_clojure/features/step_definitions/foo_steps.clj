@@ -5,7 +5,7 @@
 (def result)
 
 (When #"the foo method is invoked" []
-	(def result (parse-string (:body (client/get "http://localhost:8080/todo")))))
+	(def result (parse-string (:body (client/get "http://localhost:8080/foo")) true)))
 
 (Then #"^the test value is (.+)" [x]
 	(let [y (:test result)]

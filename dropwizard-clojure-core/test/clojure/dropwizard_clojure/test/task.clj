@@ -39,4 +39,5 @@
 (deftest outputStrings
 	"tests the values to writer function via the writerAsString function"
 	(is (= "" (writerOutputAsString nil)))
+	(is (= "one\n" (writerOutputAsString "one")))
 )

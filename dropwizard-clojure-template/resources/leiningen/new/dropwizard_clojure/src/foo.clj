@@ -24,7 +24,7 @@
 
 
 (defn bar-task [s]
-  "creates a dummy task returns the "
+  "creates a dummy task returns the name value from settings"
   (task/task "name" (fn [_] ((get s "name")))))
 
 (defn- sample-function [x]
