@@ -38,8 +38,10 @@
 		(doseq [s data] (post-data s))
 	))
 
-(defprotocol AddShare 
-  (save [this ^Long id]))
+
+(definterface AddShare
+  (save [^Long id]))
+
 
 (deftype ^{Path "/shares"
            Consumes ["application/json"]

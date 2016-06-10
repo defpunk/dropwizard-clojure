@@ -1,11 +1,12 @@
-(defproject dropwizard-clojure/dropwizard-clojure "0.3.0"
+(defproject dropwizard-clojure/dropwizard-clojure "0.3.1-SNAPSHOT"
   :description "Dropwizard for Clojure"
   :url "https://github.com/stevensurgnier/dropwizard-clojure"
   :license {:name "Apache License 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [io.dropwizard/dropwizard-core "0.8.2"]]
+                 [io.dropwizard/dropwizard-core "0.8.2"]
+                 [org.glassfish.jersey.media/jersey-media-multipart "2.23"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
   :test-paths ["test/clojure"]

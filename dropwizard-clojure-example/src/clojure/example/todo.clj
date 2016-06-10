@@ -11,6 +11,7 @@
 
 (definterface ITodo
   (get [])
+  (extra [^java.io.InputStream is])
   (delete [])
   (add [^Long id ^example.todo.Todo item])
   (get [^Long id])
@@ -35,6 +36,10 @@
     ITodo
     (^{GET true Timed true} get [this] @state)
 
+     (^{Path "create" POST true Timed true Consumes ["application/vnd.ms-excel"]}
+      extra [this is]
+      (println "creating a thingy"))
+
     (^{DELETE true Timed true} delete [this]
      (reset! state {})
      {})
@@ -47,6 +52,8 @@
     (^{Path "{id}" GET true Timed true}
      get [this ^{PathParam "id"} id]
      (get @state id))
+
+
     
     (^{Path "{id}/toggle" POST true Timed true}
      toggle [this ^{PathParam "id"} id]
