@@ -6,7 +6,8 @@
            [io.dropwizard Application]
            [io.dropwizard.setup Environment]
            [io.dropwizard.jersey.setup JerseyEnvironment]
-           [com.codahale.metrics.health HealthCheckRegistry]))
+           [com.codahale.metrics.health HealthCheckRegistry]
+           (io.dropwizard.lifecycle Managed)))
 
 (defprotocol ApplicationSetup
   (initialize [this bootstrap])
@@ -31,6 +32,11 @@
     (dorun (map #(.register jersey %) resources))
     env))
 
+
+(defn add-managed-object [^Environment e ^Managed m]
+  (.manage(.lifecycle e) m)
+  )
+
 (defn register-resource [app resource]
   (register-resources (env-from-app app) [resource]))
 
@@ -52,6 +58,8 @@
 
 (defn register-healthcheck [^Environment env hc-name hc]
   (add-healthcheck-to-registry (.healthChecks env) hc-name hc) env)
+
+
 
 (defn register-jackson-module [^Environment env mod]
   (.registerModule (.getObjectMapper env) mod)
