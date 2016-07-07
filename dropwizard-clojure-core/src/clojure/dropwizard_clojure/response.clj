@@ -1,9 +1,13 @@
-(ns dropwizard-clojure.response)
+(ns dropwizard-clojure.response
+  (:import (javax.ws.rs.core Response)))
 
 
 (defn ok []
-  (.build (javax.ws.rs.core.Response/ok)))
+  (.build (Response/ok)))
 
 
 (defn notFound []
-  (.build (.type (javax.ws.rs.core.Response/status 404) javax.ws.rs.core.MediaType/APPLICATION_JSON_TYPE)))
+  (.build (.type (Response/status 404) javax.ws.rs.core.MediaType/APPLICATION_JSON_TYPE)))
+
+(defn accepted []
+  (.build (Response/accepted)))
