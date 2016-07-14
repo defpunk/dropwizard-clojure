@@ -5,8 +5,10 @@
 (defn ok []
   (.build (Response/ok)))
 
+(defn server-error []
+  (.build (Response/serverError)))
 
-(defn notFound []
+(defn not-found []
   (.build (.type (Response/status 404) javax.ws.rs.core.MediaType/APPLICATION_JSON_TYPE)))
 
 (defn accepted []
